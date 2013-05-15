@@ -1,0 +1,85 @@
+%% System setup
+clc;clear all;close all;
+
+
+[ai, relaybox, relaybox2] = initializemorbidostat;
+
+%Experiment settings
+growth_cycle_duration = 60*10; %In seconds
+
+
+%Set length of experiment, in overestimated seconds
+n_limit=3600*24;
+
+
+%Initialize data collection matrices
+
+data.points.od = zeros(n_limit,15);
+data.points.time = zeros(n_limit,1);
+data.cycles.growth_rate = zeros(n_limit,15);
+data.cycles.start_od = zeros(n_limit,15);
+data.cycles.end_od = zeros(n_limit,15);
+data.cycles.start_point = zeros(n_limit,15);
+data.cycles.end_point = zeros(n_limit,15);
+
+
+
+
+%Live plot updating period (in seconds)
+plot_update = 60;
+
+%Initialize live display figure
+live_plot = figure();
+live_axes = {};
+for i=1:15
+    subplot(5,3,i);
+    live_axes{i} = plot(0,0,'b-');
+    title(['tube ' num2str(i)]);
+    xlabel('time (h)');
+    ylabel('od');
+end
+
+
+
+%Output to file (backing up) period (in seconds)
+output_period = 600;
+output_filename = 'staph_aureus_growth_28c';
+
+%Get start time
+start_time = datenum(clock);
+cycle_start_time = start_time;
+
+
+for n=1:n_limit
+    
+    %Acquire data
+    start(ai);
+    [rawdata,sample_time,abstime,events] = getdata(ai);
+    
+    %Take median of samples as data point
+    sample_data = median(rawdata);
+    
+    %Obtain relative time (in seconds) since start of experiment
+    relative_time = (datenum(abstime)-start_time)*24*3600;
+    
+    %Record values to data matrix
+    data.points.time(n,1) = relative_time;
+    data.points.od(n,:) = sample_data;
+    
+    %F
+    
+    if mod(n, plot_update)==0
+        for i=1:15
+           set(live_axes{i},...
+            'XData',time(1:n, 1)/3600,...
+            'YData',(od(1:n, i))...
+            );
+        end
+        drawnow;
+    end
+    
+    if mod(n, output_period)==0
+       save([output_filename '.mat']) 
+    end
+
+end

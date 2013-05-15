@@ -1,0 +1,33 @@
+function [sample_data, sample_time, relative_sample_time] = acquiredata(ai,acquisitionTime,experimentStartTime,parameters)
+
+sampleRate = get(ai, 'SampleRate');
+set(ai, 'SamplesPerTrigger', sampleRate);
+waitTime = 1.5;
+acquisitionStartTime = datenum(clock);
+
+%Pre-allocate output matrices
+sample_data = zeros(ceil(acquisitionTime), 15);
+sample_time = zeros(ceil(acquisitionTime), 1);
+
+iMeasurement = 1;
+while 3600*24*(datenum(clock)-acquisitionStartTime) < acquisitionTime
+    
+    start(ai)
+    wait(ai, waitTime);
+    [rawdata,sample_time,abstime,events] = getdata(ai);
+    
+    %Get median of rawdata and apply calibration
+    sample_data(iMeasurement,1:15) = median(rawdata).*parameters.calibration.b + parameters.calibration.a;
+    
+    %Obtain measurement time relative to start of experiment
+    sample_time(iMeasurement, 1) = 3600*24*(datenum(abstime)-experimentStartTime);  
+    
+    iMeasurement = iMeasurement + 1;
+end
+
+sample_data = sample_data(1:iMeasurement, 1:15);
+sample_time = sample_time(1:iMeasurement, 1);
+
+
+
+end

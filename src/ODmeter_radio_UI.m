@@ -1,0 +1,177 @@
+function varargout = ODmeter_radio_UI(varargin)
+% ODMETER_RADIO_UI M-file for ODmeter_radio_UI.fig
+%      ODMETER_RADIO_UI, by itself, creates a new ODMETER_RADIO_UI or raises the existing
+%      singleton*.
+%
+%      H = ODMETER_RADIO_UI returns the handle to a new ODMETER_RADIO_UI or the handle to
+%      the existing singleton*.
+%
+%      ODMETER_RADIO_UI('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in ODMETER_RADIO_UI.M with the given input arguments.
+%
+%      ODMETER_RADIO_UI('Property','Value',...) creates a new ODMETER_RADIO_UI or raises the
+%      existing singleton*.  Starting from the left, property value pairs are
+%      applied to the GUI before ODmeter_radio_UI_OpeningFcn gets called.  An
+%      unrecognized property name or invalid value makes property application
+%      stop.  All inputs are passed to ODmeter_radio_UI_OpeningFcn via varargin.
+%
+%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
+%      instance to run (singleton)".
+%
+% See also: GUIDE, GUIDATA, GUIHANDLES
+
+% Edit the above text to modify the response to help ODmeter_radio_UI
+
+% Last Modified by GUIDE v2.5 19-Dec-2012 13:28:25
+
+% Begin initialization code - DO NOT EDIT
+gui_Singleton = 1;
+gui_State = struct('gui_Name',       mfilename, ...
+                   'gui_Singleton',  gui_Singleton, ...
+                   'gui_OpeningFcn', @ODmeter_radio_UI_OpeningFcn, ...
+                   'gui_OutputFcn',  @ODmeter_radio_UI_OutputFcn, ...
+                   'gui_LayoutFcn',  [] , ...
+                   'gui_Callback',   []);
+if nargin && ischar(varargin{1})
+    gui_State.gui_Callback = str2func(varargin{1});
+end
+
+if nargout
+    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+else
+    gui_mainfcn(gui_State, varargin{:});
+end
+% End initialization code - DO NOT EDIT
+
+
+% --- Executes just before ODmeter_radio_UI is made visible.
+function ODmeter_radio_UI_OpeningFcn(hObject, eventdata, handles, varargin)
+% This function has no output args, see OutputFcn.
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% varargin   command line arguments to ODmeter_radio_UI (see VARARGIN)
+
+% Choose default command line output for turbidostat_UI
+handles.output = hObject;
+
+% Update handles structure
+guidata(hObject, handles);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+% INITIALIZATION 
+global parameters iPhase nPhase initialization relayBoxes ...
+    growthPhaseData state
+
+parameters = varargin{1}; 
+
+% Initialize variables
+[ai, relayBoxes] = initializemorbidostat;
+sampleRate = get(ai, 'SampleRate');
+experimentStartTime = datenum(clock);
+parameters.startTime = experimentStartTime;
+
+% Store initialized variables
+initialization.ai = ai; 
+initialization.sampleRate = sampleRate; 
+initialization.experimentStartTime = experimentStartTime; 
+
+%Initialize Data Structures 
+nPhase=5000;
+for iPhase=1:nPhase
+    growthPhaseData(iPhase).sampleOD = zeros(0, 15);
+    growthPhaseData(iPhase).sampleTime = zeros(0, 1);
+
+    growthPhaseData(iPhase).startOD = zeros(1,15);
+    growthPhaseData(iPhase).growthRate = zeros(1,15);
+    growthPhaseData(iPhase).endOD = zeros(1,15);
+
+end
+
+iPhase = 1; 
+
+% Initialize plotting figure
+figure(1); 
+ylim([0 1.0]); 
+ylabel('OD', 'FontWeight', 'bold', 'FontSize', 16); 
+xlabel('Time (hours)', 'FontWeight', 'bold', 'FontSize', 16); 
+hold on; 
+
+
+% --- Outputs from this function are returned to the command line.
+function varargout = ODmeter_radio_UI_OutputFcn(hObject, eventdata, handles) 
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get default command line output from handles structure
+varargout{1} = handles.output;
+startState = get(handles.start, 'Value'); 
+stopState = get(handles.stop, 'Value'); 
+state = [startState stopState];
+
+
+% --- Executes on button press in start.
+function start_Callback(hObject, eventdata, handles)
+% hObject    handle to start (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Exclusive selection
+set(handles.stop, 'Value', 0);
+
+% Declare global variables
+global parameters iPhase nPhase initialization relayBoxes ...
+    growthPhaseData state figHan
+
+while iPhase<nPhase
+    % Check state of UI 
+    drawnow; 
+    startState = get(handles.start, 'Value'); 
+    stopState = get(handles.stop, 'Value'); 
+    state = [startState stopState];
+    
+    if eq(state, [1 0])
+        % Measure
+        growthPhaseData = ODmeter(parameters, iPhase, initialization, ...
+            relayBoxes, growthPhaseData, handles);
+        
+        % Setup plot
+        figure(1); 
+        hold on; 
+        ylim([0 1.0]);
+        % Plot
+        for i = parameters.activeCultures
+            subplot(5,3,i);
+            for j = iPhase
+                plot( growthPhaseData(j).sampleTime/3600, growthPhaseData(j).sampleOD(:,i), 'LineWidth', 2 );
+                hold on; 
+                ylim([-0.2 1.0]);
+                title( num2str(i), 'FontSize', 16, 'FontWeight', 'bold' ); 
+                xlabel('Time (hours)', 'FontSize', 14, 'FontWeight', 'bold'); 
+                ylabel('OD', 'FontSize', 14, 'FontWeight', 'bold'); 
+            end
+        end
+        
+        % Increment iPhase 
+        iPhase = iPhase+1;
+    else 
+        return 
+    end
+    
+end
+
+% --- Executes on button press in stop.
+function stop_Callback(hObject, eventdata, handles)
+% hObject    handle to stop (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Exclusive selection
+set(handles.start, 'Value', 0); 
+global growthPhaseData state parameters 
+save([parameters.dataFolder filesep 'run_data_' datestr(clock,'yyyy_mm_dd_HH') '.mat'], 'growthPhaseData', 'parameters');
+
+return 
+

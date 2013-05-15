@@ -1,0 +1,20 @@
+function output = calibration_curve(data, realod)
+% Returns 
+    [numpoints numtubes] = size(data); 
+    
+    % initialize 
+    output = zeros(2, numtubes); 
+    % calculate slope and intercept for each tube 
+    for i = 1:numtubes
+        [params resids] = polyfit(data(:,i), realod',1); 
+        % record slope
+        output(1,i) = params(1); 
+        % record intercept 
+        output(2,i) = params(2); 
+        y = data(:,i)*output(1,i)+output(2,i);
+        subplot(5,3,i)
+        plot(2*output(1,i)+output(2,i)
+        hold on
+        plot(
+    end
+end

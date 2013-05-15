@@ -1,0 +1,8 @@
+% Chemostat run for 11/05/2012
+
+clear all; 
+close all;
+parameters = 12; 
+
+% call UI 
+chemostat_UI(parameters); 
