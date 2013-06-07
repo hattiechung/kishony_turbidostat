@@ -59,21 +59,41 @@ handles.output = hObject;
 guidata(hObject, handles);
 
 % ___ Initialization ___ %
-global relayBoxes state whichPumps parameters
+global relayBoxes state whichPumps parameters growthPhaseData iPhase initialization 
 
-% initialize which pumps are active 
 parameters = varargin{1}; 
 
-% collect indices of first pumps for all active tubes
-totalNumTubes = parameters.numTubes; % total number of tubes
+% collect indices of first pump for all active tubes
+% WRITE: Switch between 1st, 2nd, 3rd, or all tubes  
+activeTubes = parameters.activeCultures; 
 whichPumps = [];
-for j = 1:totalNumTubes
-    whichPumps(end+1) = 3*(j-1)+1;
+for j = activeTubes
+    whichPumps(end+1) = 3*(j-1)+1;  % <--- change here for other pumps
 end
 
+% Initialize variables
 [ai, relayBoxes] = initializemorbidostat;
+sampleRate = get(ai, 'SampleRate'); 
+experimentStartTime = datenum(clock); 
+parameters.startTime = experimentStartTime; 
 
+% Store initialized var
+initialization.ai = ai; 
+initialization.sampleRate = sampleRate; 
+initialization.experimentStartTime = experimentStartTime; 
 
+% Initialize OD saving data structure
+nPhase = 10000; 
+for iPhase = 1:nPhase
+    growthPhaseData(iPhase).sampleOD = zeros(0,15); 
+    growthPhaseData(iPhase).sampleTime = zeros(0,1); 
+
+    growthPhaseData(iPhase).startOD = zeros(1,15); 
+    growthPhaseData(iPhase).growthRate = zeros(1,15); 
+    growthPhaseData(iPhase).endOD = zeros(1,15); 
+end
+
+iPhase = 1; 
 
 
 % --- Outputs from this function are returned to the command line.
@@ -86,7 +106,7 @@ function varargout = chemostat_UI_OutputFcn(hObject, eventdata, handles)
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
-global state whichPumps 
+global state
 
 % Grab radio button states
 pState = get(handles.pause, 'Value'); 
@@ -156,37 +176,47 @@ set(handles.refill, 'Value', 0);
 % print statement
 disp('Entering start state'); 
 
-global relayBoxes whichPumps state parameters
+global parameters iPhase initialization relayBoxes growthPhaseData whichPumps state
 
 secondsOfDilution = parameters.addLiquidTime; % # of seconds to add media
 secondsOfPause = parameters.waitTime;
 
-% check states
-drawnow; 
 pState = get(handles.pause, 'Value'); 
 rState = get(handles.refill, 'Value'); 
 sState = get(handles.start, 'Value'); 
 state = [pState rState sState];
-
+    
 while isequal(state, [0 0 1])
+    % Measure OD (time is an implicit variable) 
+    growthPhaseData = ODmeter(parameters, iPhase, initialization, ...
+            relayBoxes, growthPhaseData, handles); 
+    
+    % Setup plot 
+    figure(1); hold on; 
+
+    % Plot
+    for i = parameters.activeCultures
+        subplot(5,3,i); 
+        for j = iPhase
+            plot( growthPhaseData(j).sampleTime/3600, growthPhaseData(j).sampleOD(:,i), 'LineWidth', 2); 
+            hold on; 
+            ylim([-0.2 1.0]); 
+            title( num2str(i), 'FontSize', 16, 'FontWeight', 'bold'); 
+            xlabel('Time (hr)', 'FontSize', 14, 'FontWeight', 'bold');
+            ylabel('OD', 'FontSize', 14, 'FontWeight', 'bold'); 
+        end
+    end
+
+    % ___ DILUTION ___ %
     % turn on active pumps 
     pumps = zeros(1,48);
-    for i = whichPumps
-        pumps(i) = 1; 
-    end
+    pumps(whichPumps) = 1; 
     switchpumps(pumps, relayBoxes);
-
-    % wait appropriate number of seconds
+    % dilute
     sprintf('Adding %d seconds of liquid', secondsOfDilution); 
     pause(secondsOfDilution);
 
-    % check states
-    drawnow; 
-    pState = get(handles.pause, 'Value'); 
-    rState = get(handles.refill, 'Value'); 
-    sState = get(handles.start, 'Value'); 
-    state = [pState rState sState];
-
+    % ___ WAITING ___ %
     % turn off active pumps 
     switchpumps(zeros(1,48), relayBoxes);
 
@@ -198,11 +228,16 @@ while isequal(state, [0 0 1])
     state = [pState rState sState];
     
     if eq(state, [0 0 1])
-        % wait appropriate number of seconds 
+        % WAIT  
         sprintf('Waiting %d seconds before adding liquid again', secondsOfPause); 
         pause(secondsOfPause);
+        % Get OD  
     else
+        % Save Data 
+        disp('exiting'); 
         break 
     end
+
+    iPhase = iPhase+1; 
 
 end

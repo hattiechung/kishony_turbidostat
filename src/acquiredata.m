@@ -32,7 +32,7 @@ while 3600*24*(datenum(clock)-acquisitionStartTime) < acquisitionTime
         
         [rawdata,reltime,abstime,events] = getdata(ai);
         
-        %Get median of rawdata and apply calibration
+        %Get median of rawdata and apply calibration) 
         sample_data(iMeasurement,1:15) = median(rawdata).*calibration.linear + calibration.constant;
 
         %Obtain measurement time relative to start of experiment

@@ -2,6 +2,7 @@ function growthPhaseData = ODmeter(parameters, iPhase, initialization, relayBoxe
 %%%%%%%%%%
 % This contains the main work to measure and record OD. 
 %%%%%%%%%%
+disp('in ODmeter'); 
 
 % Unpack initialization variables
 ai = initialization.ai; 
@@ -52,36 +53,36 @@ if state_change == 1
 end 
 
 % Calculate avg OD
-
-text_threshold_OD = parameters.dilutionThreshold(1); 
-
-first_media_average_OD = mean(all_current_ODs([1])); % hard-coded
-sprintf('Average MOPS Minimal %.3f', first_media_average_OD)
-
-second_media_average_OD = mean(all_current_ODs([2])); % hard-coded 
-sprintf('Average MOPS Rich %.3f', second_media_average_OD)
-
-% If average OD is > thresold, send text
-
-first_media_condition = first_media_average_OD > text_threshold_OD && first_media_average_OD <= 0.3;
-second_media_condition = second_media_average_OD > text_threshold_OD && second_media_average_OD <= 0.3; 
-if first_media_condition || second_media_condition
-    
-    if first_media_condition && second_media_condition
-        msgTitle = sprintf('MOPS Min %.2f, MOPS Rich %.2f', first_media_average_OD, second_media_average_OD); 
-    elseif first_media_condition
-        msgTitle = sprintf('MOPS Minimal %.3f', first_media_average_OD); 
-    elseif second_media_condition
-        msgTitle = sprintf('MOPS Rich %.3f', second_media_average_OD);
-    end
-    
-    msgContent = all_current_ODs(1); 
-    for k = 2:max(parameters.activeCultures)
-        od = all_current_ODs(k); 
-        msgContent = sprintf('\n %s \n %s', msgContent, num2str(od));
-    end
-    
-    send_text_from_kishony_turbidostat('19199614423', msgTitle, msgContent); 
-end
+% 
+% text_threshold_OD = parameters.dilutionThreshold(1); 
+% 
+% first_media_average_OD = mean(all_current_ODs([1])); % hard-coded
+% sprintf('Average MOPS Minimal %.3f', first_media_average_OD)
+% 
+% second_media_average_OD = mean(all_current_ODs([2])); % hard-coded 
+% sprintf('Average MOPS Rich %.3f', second_media_average_OD)
+% 
+% % If average OD is > thresold, send text
+% 
+% first_media_condition = first_media_average_OD > text_threshold_OD && first_media_average_OD <= 0.3;
+% second_media_condition = second_media_average_OD > text_threshold_OD && second_media_average_OD <= 0.3; 
+% if first_media_condition || second_media_condition
+%     
+%     if first_media_condition && second_media_condition
+%         msgTitle = sprintf('MOPS Min %.2f, MOPS Rich %.2f', first_media_average_OD, second_media_average_OD); 
+%     elseif first_media_condition
+%         msgTitle = sprintf('MOPS Minimal %.3f', first_media_average_OD); 
+%     elseif second_media_condition
+%         msgTitle = sprintf('MOPS Rich %.3f', second_media_average_OD);
+%     end
+%     
+%     msgContent = all_current_ODs(1); 
+%     for k = 2:max(parameters.activeCultures)
+%         od = all_current_ODs(k); 
+%         msgContent = sprintf('\n %s \n %s', msgContent, num2str(od));
+%     end
+%     
+%     send_text_from_kishony_turbidostat('19199614423', msgTitle, msgContent); 
+% end
 
 end
