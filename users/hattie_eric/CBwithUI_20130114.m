@@ -2,6 +2,8 @@
 % Selection with infA 3N library, whole gene
 % ACTUAL RUN 
 
+path('../../src', path); 
+
 clear all; close all; 
 
 % Parameters
@@ -27,7 +29,7 @@ tubes2 = [6:7 9:11]; % MOPS Rich
 % 6, 7, 9, 10: selection bins 1-4
 % 11: WT in MOPS Rich 
 
-datefolder = 'infA_20130114';
+datefolder = 'testing';
 datadest = ['data' filesep datefolder];
 
 % assert that datadest exists

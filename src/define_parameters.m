@@ -1,4 +1,4 @@
-function params = define_parameters(thresholdOD, dilutionTargetRatio, allCalibrationData, mediaTubeAssign, datadest, growthPhaseResolution) 
+function params = define_parameters(thresholdOD, dilutionTargetRatio, allCalibrationData, mediaTubeAssign, datadest, growthPhaseResolution, piecewise, plotall) 
 % ______________________________________________________________
 % written by HC, modified 05/15/2013
 % Outputs parameters package 
@@ -11,24 +11,34 @@ function params = define_parameters(thresholdOD, dilutionTargetRatio, allCalibra
 if nargin < 6
     growthPhaseResolution = 60*10;
 end
+if nargin < 7
+    piecewise = 0; 
+end
+if nargin < 8
+    plotall = 0; 
+end
 
 % Parameters 
 parameters.growthPhaseDuration = growthPhaseResolution; 
 parameters.dilutionPhaseResolution = 5; 
 parameters.activeCultures = [mediaTubeAssign{:}];
-parameters.maxDilutionLength = 72;
+parameters.maxDilutionLength = 72; % min? 
 parameters.dataFolder = datadest;
 
 % Detect number of media
 num_media = numel(mediaTubeAssign);
 disp(sprintf('Detected %i media types', num_media)); 
 
+%initialize calibration for all
+parameters.calibration.linear(1:15) = 0; 
+parameters.calibration.constant(1:15) = 0; 
+
 % Define calibration for each media 
 for m = 1:num_media
     % create fit
     volts = allCalibrationData{m}.data; 
     actual_OD = allCalibrationData{m}.realod;
-    calibration_fit = calibration_curve(volts, actual_OD);
+    calibration_fit = calibration_curve(volts, actual_OD, plotall, piecewise);
     % get which tubes for this media
     tubes = mediaTubeAssign{m}; 
     % store fit data

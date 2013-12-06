@@ -12,21 +12,21 @@ experimentStartTime = initialization.experimentStartTime;
 % ___ Run Growth Phase ___ 
 fprintf('Starting OD measuring phase %d.\n', iPhase)
 set(ai, 'SamplesPerTrigger', floor(sampleRate*parameters.growthPhaseDuration));
-[sample_data, sample_time, state_change] = acquiredata(ai, parameters.growthPhaseDuration, experimentStartTime, parameters.calibration, handles); % already checks for UI state change 
+[sample_data, sample_time, state_change] = acquiredata(ai, parameters, experimentStartTime, handles); % already checks for UI state change 
 
 growthPhaseData(iPhase).sampleOD = sample_data;
 growthPhaseData(iPhase).sampleTime = sample_time;  
 
 % ___ Fit the growth curves ___ 
 % calculate average OD
-all_current_ODs = zeros(max(parameters.activeCultures), 1); 
+all_current_ODs = zeros(length(parameters.activeCultures), 1); 
 
 for iCulture=parameters.activeCultures
     % Fit growth curves
 
     % get OD, logOD of all active cultures
-    sample_data(:,iCulture);
-    log(sample_data(:,iCulture));
+    sample_data(:,iCulture)
+    log(sample_data(:,iCulture))
     
     % calculate growth rate 
     robfit = robustfit(sample_time-sample_time(1), log(sample_data(:,iCulture)));
@@ -53,36 +53,39 @@ if state_change == 1
 end 
 
 % Calculate avg OD
-% 
-% text_threshold_OD = parameters.dilutionThreshold(1); 
-% 
-% first_media_average_OD = mean(all_current_ODs([1])); % hard-coded
-% sprintf('Average MOPS Minimal %.3f', first_media_average_OD)
-% 
+
+text_threshold_OD = parameters.dilutionThreshold(1); 
+
+first_media_average_OD = mean(all_current_ODs); % hard-coded
+sprintf('Average MOPS Minimal %.3f', first_media_average_OD)
+
 % second_media_average_OD = mean(all_current_ODs([2])); % hard-coded 
 % sprintf('Average MOPS Rich %.3f', second_media_average_OD)
-% 
-% % If average OD is > thresold, send text
-% 
-% first_media_condition = first_media_average_OD > text_threshold_OD && first_media_average_OD <= 0.3;
+
+% If average OD is > thresold, send text
+
+first_media_condition = first_media_average_OD > text_threshold_OD && first_media_average_OD <= text_threshold_OD*1.05;
 % second_media_condition = second_media_average_OD > text_threshold_OD && second_media_average_OD <= 0.3; 
-% if first_media_condition || second_media_condition
-%     
+
+if first_media_condition
+% if (all_current_ODs(6) > text_threshold_OD)% first_media_condition % || second_media_condition
+    
 %     if first_media_condition && second_media_condition
 %         msgTitle = sprintf('MOPS Min %.2f, MOPS Rich %.2f', first_media_average_OD, second_media_average_OD); 
 %     elseif first_media_condition
-%         msgTitle = sprintf('MOPS Minimal %.3f', first_media_average_OD); 
+        msgTitle = sprintf('MOPS Minimal %.3f', first_media_average_OD); 
 %     elseif second_media_condition
 %         msgTitle = sprintf('MOPS Rich %.3f', second_media_average_OD);
 %     end
-%     
-%     msgContent = all_current_ODs(1); 
-%     for k = 2:max(parameters.activeCultures)
-%         od = all_current_ODs(k); 
-%         msgContent = sprintf('\n %s \n %s', msgContent, num2str(od));
-%     end
-%     
+    
+    msgContent = all_current_ODs(1); 
+    for k = 2:max(parameters.activeCultures)
+        od = all_current_ODs(k); 
+        msgContent = sprintf('\n %s \n %s', msgContent, num2str(od));
+    end
+    
+    send_text_from_kishony_turbidostat('13132681488', msgTitle, msgContent,'@vtext.com'); % this should be set in parameters!!! LKS
 %     send_text_from_kishony_turbidostat('19199614423', msgTitle, msgContent); 
-% end
+end
 
 end

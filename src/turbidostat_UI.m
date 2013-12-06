@@ -180,6 +180,8 @@ set(handles.pause, 'Value', 0);
 global parameters iPhase pauses nPhase initialization relayBoxes ...
     growthPhaseData dilutionPhaseData state
 
+switchpumps(zeros(1,48), relayBoxes);
+
 while iPhase<nPhase
     % Check state of UI 
     drawnow; 

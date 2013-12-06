@@ -68,7 +68,7 @@ parameters = varargin{1};
 activeTubes = parameters.activeCultures; 
 whichPumps = [];
 for j = activeTubes
-    whichPumps(end+1) = 3*(j-1)+1;  % <--- change here for other pumps
+    whichPumps(end+1) = 3*(j-1)+2;  % <--- change here for other pumps  % LKS
 end
 
 % Initialize variables

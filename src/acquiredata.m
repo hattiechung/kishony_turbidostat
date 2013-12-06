@@ -1,4 +1,7 @@
-function [sample_data, relative_sample_time, state_change] = acquiredata(ai,acquisitionTime,experimentStartTime,calibration, handles)
+function [sample_data, relative_sample_time, state_change] = acquiredata(ai, params, experimentStartTime, handles)
+
+acquisitionTime = params.growthPhaseDuration; 
+calibration = params.calibration; 
 
 sampleRate = get(ai, 'SampleRate');
 set(ai, 'SamplesPerTrigger', sampleRate*0.85);

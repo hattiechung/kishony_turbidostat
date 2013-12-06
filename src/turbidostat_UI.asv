@@ -77,10 +77,10 @@ initialization.sampleRate = sampleRate;
 initialization.experimentStartTime = experimentStartTime; 
 
 %Initialize Data Structures 
-nPhase=500;
+nPhase=10000;   %% Chnaged it to 1000 YS
 for iPhase=1:nPhase
     growthPhaseData(iPhase).sampleOD = zeros(0, 15);
-    growthPhaseData(iPhase).sampeTime = zeros(0, 1);
+    growthPhaseData(iPhase).sampleTime = zeros(0, 1);
 
     growthPhaseData(iPhase).startOD = zeros(1,15);
     growthPhaseData(iPhase).growthRate = zeros(1,15);
@@ -158,9 +158,10 @@ global iPhase pauses nPhase state relayBoxes parameters
 % Turn on all media pumps
 % putvalue(relaybox1.Line(1:24),1); 
 % putvalue(relaybox2.Line(1:21),1);
-pumps = zeros(1,48);
-for i = parameters.activeCultures
-    pumps(i+i*) = 1; 
+numPumps = 3*parameters.activeCultures(end); 
+pumps = zeros(1,48); 
+for i = 1:numPumps
+    pumps(i) = 1; 
 end
 switchpumps(pumps, relayBoxes);
 
@@ -178,6 +179,7 @@ set(handles.pause, 'Value', 0);
 % Declare global variables
 global parameters iPhase pauses nPhase initialization relayBoxes ...
     growthPhaseData dilutionPhaseData state
+switchpumps(zeros(1,48), relayBoxes);
 
 while iPhase<nPhase
     % Check state of UI 
@@ -188,10 +190,31 @@ while iPhase<nPhase
     state = [pState rState sState];
     
     if eq(state, [0 0 1])
+        % ___ Measure ___ %
         % Maintain target OD with growth and dilution phases 
-        growth_dilution(parameters, iPhase, initialization, ...
+        [growthPhaseData, dilutionPhaseData] = growth_dilution(parameters, iPhase, initialization, ...
             relayBoxes, growthPhaseData, dilutionPhaseData, handles);
-        % Increment iPhase 
+        
+        % ___ Plot ___ %
+        % Setup plot
+        figure(1); 
+        hold on; 
+        ylim([0 1.0]);
+        % Plot
+        for i = parameters.activeCultures
+            subplot(5,3,i);
+            for j = iPhase
+                plot( growthPhaseData(j).sampleTime/3600, growthPhaseData(j).sampleOD(:,i), 'LineWidth', 2 );
+                plot( dilutionPhaseData(j).sampleTime/3600, dilutionPhaseData(j).sampleOD(:,i), 'LineWidth', 2 );
+                hold on; 
+                ylim([-0.2 1.0]);
+                title( num2str(i), 'FontSize', 16, 'FontWeight', 'bold' ); 
+                xlabel('Time (hours)', 'FontSize', 14, 'FontWeight', 'bold'); 
+                ylabel('OD', 'FontSize', 14, 'FontWeight', 'bold'); 
+            end
+        end
+        
+        % Increment iPhase  
         iPhase = iPhase+1;
     else 
         return 

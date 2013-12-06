@@ -1,5 +1,6 @@
 function [sample_data, relative_sample_time, state_change] = acquiredata(ai,acquisitionTime,experimentStartTime,calibration, handles)
 
+
 sampleRate = get(ai, 'SampleRate');
 set(ai, 'SamplesPerTrigger', sampleRate*0.85);
 waitTime = 1.5;
@@ -32,8 +33,7 @@ while 3600*24*(datenum(clock)-acquisitionStartTime) < acquisitionTime
         
         [rawdata,reltime,abstime,events] = getdata(ai);
         
-        %Get median of rawdata and apply calibration
-        size
+        %Get median of rawdata and apply calibration) 
         sample_data(iMeasurement,1:15) = median(rawdata).*calibration.linear + calibration.constant;
 
         %Obtain measurement time relative to start of experiment

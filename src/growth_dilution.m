@@ -12,7 +12,7 @@ experimentStartTime = initialization.experimentStartTime;
 % ___ Run Growth Phase ___ 
 fprintf('Starting growth phase %d.\n', iPhase)
 set(ai, 'SamplesPerTrigger', floor(sampleRate*parameters.growthPhaseDuration));
-[sample_data, sample_time, state_change] = acquiredata(ai, parameters.growthPhaseDuration, experimentStartTime, parameters.calibration, handles); % already checks for UI state change 
+[sample_data, sample_time, state_change] = acquiredata(ai, parameters, experimentStartTime, handles);  % already checks for UI state change 
 
 growthPhaseData(iPhase).sampleOD = sample_data;
 growthPhaseData(iPhase).sampleTime = sample_time;  
@@ -46,19 +46,19 @@ for iCulture=parameters.activeCultures
     fprintf('Growth Phase %d, Culture %d : final OD = %f.\n', iPhase, iCulture, endOD)
 end
 
-% calculate avg OD
-average_OD = sum_of_all_OD_values/max(parameters.activeCultures); 
+% % calculate avg OD
+% average_OD = sum_of_all_OD_values/max(parameters.activeCultures); 
 
-% If average OD is > 0.15, send text
-if average_OD > 0.15
-    title = num2str(average_OD); 
-    content = all_current_ODs(1); 
-    for i = 2:max(parameters.activeCultures)
-        od = all_current_ODs(i); 
-        content = sprintf('%s, %s', content, num2str(od));
-    end
-%     send_text_from_kishony_turbidostat('19199614423', title, content); 
-end
+% % If average OD is > 0.15, send text
+% if average_OD > 0.15
+%     title = num2str(average_OD); 
+%     content = all_current_ODs(1); 
+%     for i = 2:max(parameters.activeCultures)
+%         od = all_current_ODs(i); 
+%         content = sprintf('%s, %s', content, num2str(od));
+%     end
+% %     send_text_from_kishony_turbidostat('19199614423', title, content); 
+% end
 
 % ___ DILUTION ___ %
 
@@ -85,7 +85,11 @@ pumpStates = switchpumps(pumpsToActivate, relayBoxes);
         sState = get(handles.start, 'Value'); 
         ui_state = [pState rState sState];
         
+        
+        % IF BLOCK: checks whether UI state has changed 
         if iDilution > parameters.maxDilutionLength 
+            % turn off all pumps
+            % switchpumps(zeros(1,48), relayBoxes)  
             return  
         elseif eq(ui_state, [1 0 0]) %pause
             %Save present data
@@ -138,4 +142,3 @@ pumpStates = switchpumps(pumpsToActivate, relayBoxes);
     %Save present data
     save([parameters.dataFolder filesep 'run_data_' datestr(clock,'yyyy_mm_dd_HH') '.mat'], 'growthPhaseData', 'dilutionPhaseData', 'parameters')
 end
-            

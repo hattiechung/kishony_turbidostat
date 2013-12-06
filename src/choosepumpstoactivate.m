@@ -1,4 +1,6 @@
 function [pumpsToActivate, dilutionTargets] = choosepumpstoactivate(growthPhaseData, iPhase, parameters)
+    % pumpsToActive: is a 1x48 logical matrix. 
+
     %This specifies the dilution targets
     dilutionTargets = ones(1,15);
 
@@ -28,7 +30,7 @@ function [pumpsToActivate, dilutionTargets] = choosepumpstoactivate(growthPhaseD
     
     for iCulture=intersect(find(cultureBeingDiluted), union(prevCycleNotFinishedDiluting, currentCycleReadyToDilute))
            %This is the first pump corresponding to that culture
-           culturePumps = (iCulture-1)*3 + (1:3);
+           culturePumps = (iCulture-1)*3 + (1:3); %% CHANGE THIS FOR SEPARATE INPUTS FOR EACH VIAL 
 
            for iPump = culturePumps       
                 %Record that pump must be activated

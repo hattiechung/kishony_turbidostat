@@ -1,0 +1,38 @@
+% Chemostat test
+
+clear all; close all; 
+
+path('N:\KISHONY LAB\_Equipment\Morbidostat\scripts\src', path)
+
+% Rate Control (seconds)
+flowInTime = 20; 
+waitTime = 100; 
+
+% OD Measuring Resolution (seconds)
+% Assert gr <= waitTime 
+gr = 100;  
+
+% Calibration Data
+MOPSMinimal = load('N:\KISHONY LAB\adrian\turbidostat-hattie-eric\MOPS_Minimal_2013_01_07.mat');
+MOPSRich = load('N:\KISHONY LAB\adrian\turbidostat-hattie-eric\MOPS_Rich_2013_01_08.mat');
+allCalibration = {MOPSMinimal, ...
+                    MOPSRich}; 
+
+% Tube Assignments 
+tubes_media1 = 1:3; 
+tubes_media2 = []; 
+tubeAssignments = { tubes_media1, tubes_media2 }; 
+
+% Data Saving
+datefolder = 'test';
+datadest = ['data' filesep datefolder];
+if exist(datadest, 'dir') ~= 7
+    mkdir( 'data/', datefolder );
+end
+
+% Create Parameters
+parameters = define_parameters_chemostat( allCalibration, tubeAssignments, datadest, flowInTime, waitTime, gr);  
+
+% Run Experiment + UI 
+chemostat_UI(parameters);
+
